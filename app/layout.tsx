@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import Navigation from "@/components/navigation";
 import CommandPalette from "@/components/command-palette";
 import Footer from "@/components/footer";
+import BackgroundCanvas from "@/components/background/background-canvas";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -180,6 +181,7 @@ export default function RootLayout({
           >
             Skip to content
           </a>
+          <BackgroundCanvas />
           <Navigation />
           <CommandPalette />
           <main>{children}</main>

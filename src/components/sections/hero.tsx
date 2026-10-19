@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   ArrowRight,
   Mail,
@@ -30,166 +29,6 @@ const itemVariants = {
   },
 };
 
-function ParticleField() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    let animationFrame = 0;
-    let width = 0;
-    let height = 0;
-    let dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-
-    type Particle = {
-      x: number;
-      y: number;
-      vx: number;
-      vy: number;
-      r: number;
-      o: number;
-    };
-
-    let particles: Particle[] = [];
-
-    const seed = () => {
-      const density = Math.floor((width * height) / 14000);
-      const count = Math.min(120, Math.max(40, density));
-      particles = Array.from({ length: count }, () => ({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        vx: (Math.random() - 0.5) * 0.25,
-        vy: (Math.random() - 0.5) * 0.25,
-        r: Math.random() * 1.4 + 0.4,
-        o: Math.random() * 0.5 + 0.25,
-      }));
-    };
-
-    const resize = () => {
-      if (!canvas) return;
-      const rect = canvas.getBoundingClientRect();
-      width = rect.width;
-      height = rect.height;
-      dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-      canvas.width = Math.floor(width * dpr);
-      canvas.height = Math.floor(height * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      seed();
-    };
-
-    resize();
-    window.addEventListener("resize", resize);
-
-    const render = () => {
-      ctx.clearRect(0, 0, width, height);
-
-      for (const p of particles) {
-        p.x += p.vx;
-        p.y += p.vy;
-        if (p.x < 0 || p.x > width) p.vx *= -1;
-        if (p.y < 0 || p.y > height) p.vy *= -1;
-
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(129, 140, 248, ${p.o})`;
-        ctx.fill();
-      }
-
-      for (let i = 0; i < particles.length; i++) {
-        const a = particles[i];
-        for (let j = i + 1; j < particles.length; j++) {
-          const b = particles[j];
-          const dx = a.x - b.x;
-          const dy = a.y - b.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 120) {
-            const alpha = (1 - dist / 120) * 0.18;
-            ctx.strokeStyle = `rgba(147, 197, 253, ${alpha})`;
-            ctx.lineWidth = 0.6;
-            ctx.beginPath();
-            ctx.moveTo(a.x, a.y);
-            ctx.lineTo(b.x, b.y);
-            ctx.stroke();
-          }
-        }
-      }
-
-      animationFrame = requestAnimationFrame(render);
-    };
-
-    const prefersReduced = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches;
-    if (!prefersReduced) render();
-
-    return () => {
-      cancelAnimationFrame(animationFrame);
-      window.removeEventListener("resize", resize);
-    };
-  }, []);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      aria-hidden
-      className="absolute inset-0 h-full w-full"
-    />
-  );
-}
-
-function OrbitalRings() {
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-  const springX = useSpring(mouseX, { stiffness: 60, damping: 20 });
-  const springY = useSpring(mouseY, { stiffness: 60, damping: 20 });
-  const rx = useTransform(springY, [-300, 300], [12, -12]);
-  const ry = useTransform(springX, [-300, 300], [-12, 12]);
-
-  useEffect(() => {
-    const onMove = (e: MouseEvent) => {
-      const cx = window.innerWidth / 2;
-      const cy = window.innerHeight / 2;
-      mouseX.set(e.clientX - cx);
-      mouseY.set(e.clientY - cy);
-    };
-    window.addEventListener("mousemove", onMove);
-    return () => window.removeEventListener("mousemove", onMove);
-  }, [mouseX, mouseY]);
-
-  return (
-    <motion.div
-      className="pointer-events-none absolute left-1/2 top-1/2 h-[720px] w-[720px] -translate-x-1/2 -translate-y-1/2"
-      style={{ rotateX: rx, rotateY: ry, transformStyle: "preserve-3d" }}
-    >
-      {[260, 360, 460, 560].map((size, i) => (
-        <motion.div
-          key={size}
-          className="absolute left-1/2 top-1/2 rounded-full border border-foreground/10"
-          style={{
-            width: size,
-            height: size,
-            marginLeft: -size / 2,
-            marginTop: -size / 2,
-          }}
-          animate={{ rotate: i % 2 === 0 ? 360 : -360 }}
-          transition={{ duration: 60 + i * 20, repeat: Infinity, ease: "linear" }}
-        >
-          <span
-            className="absolute top-0 left-1/2 block h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 shadow-[0_0_20px_rgba(99,102,241,0.8)]"
-            style={{
-              transform: `translateX(-50%) translateY(-50%) rotate(${i * 45}deg)`,
-            }}
-          />
-        </motion.div>
-      ))}
-      <div className="absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-blue-500/30 to-purple-500/30 blur-2xl" />
-    </motion.div>
-  );
-}
-
 export default function HeroSection() {
   return (
     <section
@@ -198,10 +37,6 @@ export default function HeroSection() {
     >
       <div className="absolute inset-0 -z-10 mesh-gradient" />
       <div className="absolute inset-0 -z-10 grid-pattern opacity-40 [mask-image:radial-gradient(ellipse_at_center,black_20%,transparent_70%)]" />
-      <div className="absolute inset-0 -z-10">
-        <ParticleField />
-      </div>
-      <OrbitalRings />
 
       <motion.div
         className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 text-center"
