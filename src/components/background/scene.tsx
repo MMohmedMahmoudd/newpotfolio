@@ -9,6 +9,7 @@ import { createDriftSwarm, createMainSwarm, type SwarmData } from "./shapes";
 
 type SceneState = {
   stage: number;
+  globeX: number;
   opacity: number;
   shiftX: number;
   time: number;
@@ -17,9 +18,9 @@ type SceneState = {
 const DARK_COLORS = ["#ffc21a", "#8a5cff", "#f4f4ff", "#2dd4bf"];
 const LIGHT_COLORS = ["#d99a00", "#6d3df0", "#334155", "#0f9b8e"];
 
-// scroll fraction -> morph stage (0 orb, 1 cloud, 2 spiral, 3 letter)
-const KEY_FRACTIONS = [0, 0.07, 0.22, 0.5, 0.68, 0.88, 1];
-const KEY_STAGES = [0, 0, 1, 1, 2, 3, 3];
+// scroll fraction -> morph stage (0 brain, 1 globe, 2 </> VERTEX, 3 letter)
+const KEY_FRACTIONS = [0, 0.02, 0.07, 0.34, 0.46, 0.62, 0.85, 1];
+const KEY_STAGES = [0, 0, 1, 1, 2, 2, 3, 3];
 
 function stageForScroll(f: number) {
   for (let i = 1; i < KEY_FRACTIONS.length; i++) {
@@ -38,6 +39,7 @@ const VERTEX = /* glsl */ `
   uniform float uStage;
   uniform float uSize;
   uniform float uOpacity;
+  uniform float uGlobeX;
   uniform vec3 uShift;
   uniform vec3 uColors[4];
 
@@ -64,6 +66,18 @@ const VERTEX = /* glsl */ `
     );
   }
 
+  vec3 rotY(vec3 v, float a) {
+    float c = cos(a);
+    float s = sin(a);
+    return vec3(c * v.x + s * v.z, v.y, -s * v.x + c * v.z);
+  }
+
+  vec3 rotZ(vec3 v, float a) {
+    float c = cos(a);
+    float s = sin(a);
+    return vec3(c * v.x - s * v.y, s * v.x + c * v.y, v.z);
+  }
+
   float ease(float t) {
     return t * t * (3.0 - 2.0 * t);
   }
@@ -74,24 +88,29 @@ const VERTEX = /* glsl */ `
     float t = s - seg;
     float tt = ease(clamp(t * 1.5 - aSeed * 0.5, 0.0, 1.0));
 
+    // globe: spin about a tilted axis, parked off to one side
+    vec3 globe = rotZ(rotY(aP1, uTime * 0.18), 0.4) + vec3(uGlobeX, 0.0, 0.0);
+
     vec3 a = aP0;
-    vec3 b = aP1;
-    if (seg > 0.5 && seg < 1.5) { a = aP1; b = aP2; }
+    vec3 b = globe;
+    if (seg > 0.5 && seg < 1.5) { a = globe; b = aP2; }
     if (seg > 1.5) { a = aP2; b = aP3; }
 
     vec3 p = mix(a, b, tt);
 
     float energy = sin(3.14159265 * t);
+    // text shapes (stages 2 and 3) need smaller, steadier pyramids to stay legible
+    float textW = clamp(1.0 - abs(s - 2.0), 0.0, 1.0) + clamp(1.0 - abs(s - 3.0), 0.0, 1.0);
     vec3 drift = vec3(
       sin(uTime * 0.5 + aSeed * 40.0),
       cos(uTime * 0.4 + aSeed * 23.0),
       sin(uTime * 0.35 + aSeed * 11.0)
-    ) * (0.06 + energy * 0.9);
+    ) * (0.06 * (1.0 - 0.6 * textW) + energy * 2.2);
     p += drift + uShift;
 
     float angle = uTime * (0.4 + aSeed) + aSeed * 6.2831853;
     vec3 axis = vec3(sin(aSeed * 91.0), cos(aSeed * 57.0), sin(aSeed * 33.0) + 1.5);
-    vec3 local = rotation(axis, angle) * position * aScale * uSize;
+    vec3 local = rotation(axis, angle) * position * aScale * uSize * (1.0 - 0.5 * textW);
 
     vec4 mv = modelViewMatrix * vec4(p + local, 1.0);
     gl_Position = projectionMatrix * mv;
@@ -169,6 +188,7 @@ function Swarm({
       uStage: { value: 0 },
       uSize: { value: size },
       uOpacity: { value: 1 },
+      uGlobeX: { value: 0 },
       uShift: { value: new THREE.Vector3() },
       uColors: { value: DARK_COLORS.map((c) => new THREE.Color(c)) },
     }),
@@ -191,6 +211,7 @@ function Swarm({
     u.uTime.value = s.time;
     u.uStage.value = s.stage;
     u.uOpacity.value = s.opacity * opacityScale;
+    u.uGlobeX.value = s.globeX;
     (u.uShift.value as THREE.Vector3).set(s.shiftX, 0, 0);
     /* eslint-enable react-hooks/immutability */
   });
@@ -223,10 +244,16 @@ function Rig({
   const { viewport, invalidate } = useThree();
   const scroll = useRef(0);
   const pointer = useRef({ x: 0, y: 0 });
-  const state = useRef<SceneState>({ stage: 0, opacity: 1, shiftX: 0, time: 0 });
+  const state = useRef<SceneState>({
+    stage: 0,
+    globeX: 0,
+    opacity: 1,
+    shiftX: 0,
+    time: 0,
+  });
 
   const main = useMemo(
-    () => createMainSwarm(mobile ? 2200 : 5200, "M"),
+    () => createMainSwarm(mobile ? 2200 : 5200, "M", mobile),
     [mobile]
   );
   const drift = useMemo(() => createDriftSwarm(mobile ? 14 : 34), [mobile]);
@@ -268,7 +295,9 @@ function Rig({
     const base = light ? 0.55 : 0.8;
     const rest = light ? 0.3 : 0.42;
     s.opacity = (rest + (base - rest) * heroWeight) * (mobile ? 0.6 : 1);
-    s.shiftX = mobile ? 0 : viewport.width * 0.3 * heroWeight;
+    s.shiftX = mobile ? 0 : viewport.width * 0.24 * heroWeight;
+    s.globeX = mobile ? 0 : -viewport.width * 0.27;
+    s.opacity += (light ? 0.1 : 0.16) * Math.max(0, 1 - Math.abs(s.stage - 1));
 
     const g = group.current;
     if (g) {
