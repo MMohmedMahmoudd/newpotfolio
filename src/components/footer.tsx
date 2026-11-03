@@ -119,7 +119,25 @@ export default function Footer() {
         <div className="flex flex-col items-start justify-between gap-4 border-t border-foreground/10 py-6 text-xs text-muted-foreground sm:flex-row sm:items-center">
           <div>
             © {year} Mohamed Mahmoud · Crafted with Next.js, TypeScript &
-            Framer Motion.
+            Framer Motion. Brain model:{" "}
+            <a
+              href="https://3d.nih.gov/entries/3765"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-2 hover:text-foreground"
+            >
+              Nevit Dilmen / NIH 3D
+            </a>{" "}
+            (
+            <a
+              href="https://creativecommons.org/licenses/by-sa/4.0/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-2 hover:text-foreground"
+            >
+              CC BY-SA 4.0
+            </a>
+            ).
           </div>
           <div className="flex items-center gap-4">
             <span className="inline-flex items-center gap-1.5">

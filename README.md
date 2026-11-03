@@ -34,3 +34,11 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Third-party assets
+
+- `public/models/brain-points.bin` - 24,000 surface points sampled (and mirrored/scaled) from
+  ["3D model of the Brain"](https://3d.nih.gov/entries/3765) by Nevit Dilmen, NIH 3D,
+  licensed [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). This file is an
+  adaptation of that model and is shared under the same licence. Regenerate it with
+  `node scripts/bake-brain.mjs` (the 107 MB source `.glb` lives in the git-ignored `assets-src/`).

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { RefObject } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useTheme } from "next-themes";
@@ -16,23 +16,47 @@ type SceneState = {
   time: number;
 };
 
-const DARK_COLORS = ["#ffc21a", "#8a5cff", "#f4f4ff", "#2dd4bf"];
-const LIGHT_COLORS = ["#d99a00", "#6d3df0", "#334155", "#0f9b8e"];
+// Palette indices used by shapes.ts:
+// 0 yellow, 1 purple, 2 white, 3 teal, 4 pink, 5 orange, 6 blue, 7 green
+const DARK_COLORS = [
+  "#ffc21a",
+  "#8a5cff",
+  "#f1eeff",
+  "#2dd4bf",
+  "#f472b6",
+  "#fb923c",
+  "#3b82f6",
+  "#a3e635",
+];
+const LIGHT_COLORS = [
+  "#d99a00",
+  "#6d3df0",
+  "#334155",
+  "#0f9b8e",
+  "#db2777",
+  "#ea580c",
+  "#2563eb",
+  "#65a30d",
+];
 
 // One keyframe per page section. `stage` picks the shape (0 brain, 1 globe,
-// 2 </> VERTEX, 3 emblem), `x` which side it sits on (the section's text is on
-// the opposite side) and `opacity` how bright it is behind that content.
+// 2 </> VERTEX, 3 emblem) - each shape spans two sections - `x` which side it
+// sits on (the section text is on the opposite side) and `opacity` how bright it is.
 type Keyframe = { id: string; stage: number; x: number; opacity: number };
 const KEYFRAMES: Keyframe[] = [
+  // brain: hero (right) -> about (left)
   { id: "home", stage: 0, x: 0.23, opacity: 1 },
-  { id: "about", stage: 1, x: -0.23, opacity: 0.9 },
-  { id: "skills", stage: 1, x: 0.23, opacity: 0.6 },
-  { id: "projects", stage: 1, x: -0.23, opacity: 0.55 },
-  { id: "experience", stage: 2, x: 0.23, opacity: 0.75 },
-  { id: "knowledge", stage: 2, x: -0.23, opacity: 0.6 },
-  { id: "testimonials", stage: 2, x: 0.23, opacity: 0.55 },
-  { id: "writing", stage: 3, x: -0.23, opacity: 0.65 },
-  { id: "contact", stage: 3, x: 0.23, opacity: 0.75 },
+  { id: "about", stage: 0, x: -0.23, opacity: 0.9 },
+  // globe: skills (right) -> projects (left)
+  { id: "skills", stage: 1, x: 0.23, opacity: 0.8 },
+  { id: "projects", stage: 1, x: -0.23, opacity: 0.7 },
+  // </> VERTEX: experience (right) -> expertise (left)
+  { id: "experience", stage: 2, x: 0.23, opacity: 0.85 },
+  { id: "knowledge", stage: 2, x: -0.23, opacity: 0.75 },
+  // emblem: testimonials (right) -> writing (left), then contact (right)
+  { id: "testimonials", stage: 3, x: 0.23, opacity: 0.75 },
+  { id: "writing", stage: 3, x: -0.23, opacity: 0.75 },
+  { id: "contact", stage: 3, x: 0.23, opacity: 0.8 },
 ];
 
 type Target = { stage: number; x: number; opacity: number };
@@ -60,6 +84,8 @@ function targetFor(y: number, tops: number[], reach: number): Target {
   return out;
 }
 
+// Each pyramid edge is drawn as a screen-space quad so the outline can be a
+// constant, readable thickness (plain GL lines are always 1px).
 const VERTEX = /* glsl */ `
   uniform float uTime;
   uniform float uStage;
@@ -67,8 +93,15 @@ const VERTEX = /* glsl */ `
   uniform float uOpacity;
   uniform float uFlow;
   uniform float uScroll;
+  uniform float uThickness;
+  uniform vec2 uResolution;
   uniform vec3 uShift;
-  uniform vec3 uColors[4];
+  uniform vec3 uColors[8];
+
+  attribute vec3 aA;
+  attribute vec3 aB;
+  attribute float aEnd;
+  attribute float aSide;
 
   attribute vec3 aP0;
   attribute vec3 aP1;
@@ -77,21 +110,16 @@ const VERTEX = /* glsl */ `
   attribute float aSeed;
   attribute float aPalette;
   attribute float aPalette2;
+  attribute float aWord;
   attribute float aScale;
 
   varying vec3 vColor;
   varying float vAlpha;
 
-  mat3 rotation(vec3 axis, float angle) {
-    axis = normalize(axis);
-    float s = sin(angle);
-    float c = cos(angle);
-    float oc = 1.0 - c;
-    return mat3(
-      oc * axis.x * axis.x + c,          oc * axis.x * axis.y + axis.z * s, oc * axis.z * axis.x - axis.y * s,
-      oc * axis.x * axis.y - axis.z * s, oc * axis.y * axis.y + c,          oc * axis.y * axis.z + axis.x * s,
-      oc * axis.z * axis.x + axis.y * s, oc * axis.y * axis.z - axis.x * s, oc * axis.z * axis.z + c
-    );
+  vec3 rotX(vec3 v, float a) {
+    float c = cos(a);
+    float s = sin(a);
+    return vec3(v.x, c * v.y - s * v.z, s * v.y + c * v.z);
   }
 
   vec3 rotY(vec3 v, float a) {
@@ -116,7 +144,7 @@ const VERTEX = /* glsl */ `
     float t = s - seg;
     float tt = ease(clamp(t * 1.5 - aSeed * 0.5, 0.0, 1.0));
 
-    // globe: spin about a tilted axis, parked off to one side
+    // globe: spin about a tilted axis
     vec3 globe = rotZ(rotY(aP1, uTime * 0.18), 0.4);
 
     vec3 a = aP0;
@@ -126,14 +154,18 @@ const VERTEX = /* glsl */ `
 
     vec3 p = mix(a, b, tt);
 
+    // scatter only while travelling: squared so it is ~0 just before a shape lands
     float energy = sin(3.14159265 * t);
+    energy *= energy;
     // text shapes (stages 2 and 3) need smaller, steadier pyramids to stay legible
-    float textW = clamp(1.0 - abs(s - 2.0), 0.0, 1.0) + clamp(1.0 - abs(s - 3.0), 0.0, 1.0);
+    float wordW = clamp(1.0 - abs(s - 2.0), 0.0, 1.0);
+    float embW = clamp(1.0 - abs(s - 3.0), 0.0, 1.0);
+    float textW = wordW + embW;
     vec3 drift = vec3(
       sin(uTime * 0.5 + aSeed * 40.0),
       cos(uTime * 0.4 + aSeed * 23.0),
       sin(uTime * 0.35 + aSeed * 11.0)
-    ) * (0.06 * (1.0 - 0.6 * textW) + energy * 2.2);
+    ) * (0.05 * (1.0 - 0.6 * textW) + energy * 2.2);
     p += drift;
     if (uFlow > 0.5) {
       // foreground pyramids drift past the camera as the page scrolls
@@ -142,17 +174,40 @@ const VERTEX = /* glsl */ `
     }
     p += uShift;
 
-    float angle = uTime * (0.4 + aSeed) + aSeed * 6.2831853;
-    vec3 axis = vec3(sin(aSeed * 91.0), cos(aSeed * 57.0), sin(aSeed * 33.0) + 1.5);
-    vec3 local = rotation(axis, angle) * position * aScale * uSize * (1.0 - 0.5 * textW);
+    // apex-up pyramids, slowly turning, tipped a little towards the camera
+    // in the word stage every pyramid faces the same way so the letters read cleanly
+    float yaw = mix(aSeed * 6.2831853 + uTime * (0.12 + aSeed * 0.25), 0.35, wordW);
+    float tilt = mix(0.5 + 0.14 * sin(uTime * 0.6 + aSeed * 20.0), 0.5, wordW);
+    // the word shows one pyramid per lattice point (aWord < 0 = hidden) at a uniform
+    // size; the emblem shows half of them so the petals stay light
+    float keep = (1.0 - embW * step(0.5, aSeed)) * (1.0 - wordW * step(aWord, -0.5));
+    float sc = mix(aScale, 1.0, wordW) * uSize * (1.0 - 0.4 * embW - 0.42 * wordW) * keep;
+    vec3 la = rotX(rotY(aA, yaw), tilt) * sc;
+    vec3 lb = rotX(rotY(aB, yaw), tilt) * sc;
 
-    vec4 mv = modelViewMatrix * vec4(p + local, 1.0);
-    gl_Position = projectionMatrix * mv;
+    mat4 mvp = projectionMatrix * modelViewMatrix;
+    vec4 ca = mvp * vec4(p + la, 1.0);
+    vec4 cb = mvp * vec4(p + lb, 1.0);
+    vec2 na = ca.xy / ca.w;
+    vec2 nb = cb.xy / cb.w;
+    vec2 dir = (nb - na) * uResolution;
+    float len = length(dir);
+    dir = len > 0.0001 ? dir / len : vec2(1.0, 0.0);
+    vec2 perp = vec2(-dir.y, dir.x);
 
-    vColor = mix(uColors[int(aPalette + 0.5)], uColors[int(aPalette2 + 0.5)], smoothstep(2.2, 3.0, s));
-    float depth = clamp(1.0 - (-mv.z - 8.0) / 22.0, 0.2, 1.0);
-    float twinkle = 0.65 + 0.35 * sin(uTime * 1.3 + aSeed * 60.0);
-    vAlpha = uOpacity * depth * twinkle;
+    vec4 clip = aEnd < 0.5 ? ca : cb;
+    clip.xy += perp * aSide * uThickness / uResolution * clip.w;
+    gl_Position = clip;
+
+    vec4 mvc = modelViewMatrix * vec4(p, 1.0);
+    vec3 c1 = uColors[int(aPalette + 0.5)];
+    vec3 c2 = uColors[int(aPalette2 + 0.5)];
+    vec3 cw = uColors[int(max(aWord, 0.0) + 0.5)];
+    vec3 base = mix(c1, cw, smoothstep(0.0, 1.0, wordW));
+    vColor = mix(base, c2, smoothstep(2.2, 3.0, s));
+    float depth = clamp(1.0 - (-mvc.z - 9.0) / 18.0, 0.25, 1.0);
+    float twinkle = mix(0.75 + 0.25 * sin(uTime * 1.3 + aSeed * 60.0), 1.0, wordW);
+    vAlpha = uOpacity * depth * twinkle * keep;
   }
 `;
 
@@ -166,28 +221,54 @@ const FRAGMENT = /* glsl */ `
   }
 `;
 
-// edges of a regular tetrahedron (6 segments)
-const TETRA = (() => {
-  const v = [
-    [1, 1, 1],
-    [-1, -1, 1],
-    [-1, 1, -1],
-    [1, -1, -1],
-  ].map((p) => p.map((c) => c * 0.5));
-  const pairs = [
-    [0, 1],
-    [0, 2],
-    [0, 3],
-    [1, 2],
-    [1, 3],
-    [2, 3],
-  ];
-  return new Float32Array(pairs.flatMap(([i, j]) => [...v[i], ...v[j]]));
+// A tetrahedron, apex up: seen from the side it reads as a triangle with one
+// inner edge, like the pyramids on the reference site.
+const PYRAMID_VERTS = (() => {
+  const apex = [0, 0.62, 0];
+  const base = [0, 1, 2].map((k) => {
+    const a = Math.PI / 2 + (k * 2 * Math.PI) / 3;
+    return [Math.cos(a) * 0.52, -0.24, Math.sin(a) * 0.52];
+  });
+  return [apex, ...base];
 })();
+const PYRAMID_EDGES = [
+  [0, 1],
+  [0, 2],
+  [0, 3],
+  [1, 2],
+  [2, 3],
+  [3, 1],
+];
+
+/** Base geometry: six edge quads (4 vertices each) shared by every instance. */
+function buildEdgeGeometry() {
+  const a: number[] = [];
+  const b: number[] = [];
+  const end: number[] = [];
+  const side: number[] = [];
+  const index: number[] = [];
+  PYRAMID_EDGES.forEach(([i, j], e) => {
+    for (const [endV, sideV] of [
+      [0, -1],
+      [0, 1],
+      [1, -1],
+      [1, 1],
+    ]) {
+      a.push(...PYRAMID_VERTS[i]);
+      b.push(...PYRAMID_VERTS[j]);
+      end.push(endV);
+      side.push(sideV);
+    }
+    const o = e * 4;
+    index.push(o, o + 1, o + 2, o + 2, o + 1, o + 3);
+  });
+  return { a, b, end, side, index };
+}
 
 function Swarm({
   data,
   size,
+  thickness,
   opacityScale,
   flow = false,
   state,
@@ -195,16 +276,24 @@ function Swarm({
 }: {
   data: SwarmData;
   size: number;
+  thickness: number;
   opacityScale: number;
   flow?: boolean;
   state: RefObject<SceneState>;
   light: boolean;
 }) {
   const material = useRef<THREE.ShaderMaterial>(null);
+  const { gl } = useThree();
 
   const geometry = useMemo(() => {
+    const edge = buildEdgeGeometry();
     const g = new THREE.InstancedBufferGeometry();
-    g.setAttribute("position", new THREE.BufferAttribute(TETRA, 3));
+    g.setIndex(edge.index);
+    g.setAttribute("position", new THREE.Float32BufferAttribute(edge.a, 3));
+    g.setAttribute("aA", new THREE.Float32BufferAttribute(edge.a, 3));
+    g.setAttribute("aB", new THREE.Float32BufferAttribute(edge.b, 3));
+    g.setAttribute("aEnd", new THREE.Float32BufferAttribute(edge.end, 1));
+    g.setAttribute("aSide", new THREE.Float32BufferAttribute(edge.side, 1));
     g.setAttribute("aP0", new THREE.InstancedBufferAttribute(data.stages[0], 3));
     g.setAttribute("aP1", new THREE.InstancedBufferAttribute(data.stages[1], 3));
     g.setAttribute("aP2", new THREE.InstancedBufferAttribute(data.stages[2], 3));
@@ -212,6 +301,7 @@ function Swarm({
     g.setAttribute("aSeed", new THREE.InstancedBufferAttribute(data.seeds, 1));
     g.setAttribute("aPalette", new THREE.InstancedBufferAttribute(data.palette, 1));
     g.setAttribute("aPalette2", new THREE.InstancedBufferAttribute(data.palette2, 1));
+    g.setAttribute("aWord", new THREE.InstancedBufferAttribute(data.word, 1));
     g.setAttribute("aScale", new THREE.InstancedBufferAttribute(data.scales, 1));
     g.instanceCount = data.count;
     return g;
@@ -227,10 +317,12 @@ function Swarm({
       uOpacity: { value: 1 },
       uFlow: { value: flow ? 1 : 0 },
       uScroll: { value: 0 },
+      uThickness: { value: thickness },
+      uResolution: { value: new THREE.Vector2(1, 1) },
       uShift: { value: new THREE.Vector3() },
       uColors: { value: DARK_COLORS.map((c) => new THREE.Color(c)) },
     }),
-    [size, flow]
+    [size, flow, thickness]
   );
 
   useEffect(() => {
@@ -250,12 +342,14 @@ function Swarm({
     u.uStage.value = s.stage;
     u.uOpacity.value = s.opacity * opacityScale;
     u.uScroll.value = s.scrollWorld;
+    u.uThickness.value = thickness * gl.getPixelRatio();
+    gl.getDrawingBufferSize(u.uResolution.value as THREE.Vector2);
     (u.uShift.value as THREE.Vector3).set(s.shiftX, 0, 0);
     /* eslint-enable react-hooks/immutability */
   });
 
   return (
-    <lineSegments geometry={geometry} frustumCulled={false}>
+    <mesh geometry={geometry} frustumCulled={false}>
       <shaderMaterial
         ref={material}
         uniforms={uniforms}
@@ -263,9 +357,10 @@ function Swarm({
         fragmentShader={FRAGMENT}
         transparent
         depthWrite={false}
+        side={THREE.DoubleSide}
         blending={light ? THREE.NormalBlending : THREE.AdditiveBlending}
       />
-    </lineSegments>
+    </mesh>
   );
 }
 
@@ -292,7 +387,24 @@ function Rig({
     time: 0,
   });
 
-  const main = useMemo(() => createMainSwarm(mobile ? 2200 : 5200, mobile), [mobile]);
+  // Baked scan of a real brain (see scripts/bake-brain.mjs). `undefined` while it
+  // loads, `null` if it could not be loaded (the procedural brain is used then).
+  const [scan, setScan] = useState<Float32Array | null | undefined>(undefined);
+  useEffect(() => {
+    let alive = true;
+    fetch("/models/brain-points.bin")
+      .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(String(r.status)))))
+      .then((b) => alive && setScan(new Float32Array(b)))
+      .catch(() => alive && setScan(null));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const main = useMemo(
+    () => (scan === undefined ? null : createMainSwarm(mobile ? 2200 : 5200, mobile, scan)),
+    [mobile, scan]
+  );
   const drift = useMemo(() => createDriftSwarm(mobile ? 14 : 34), [mobile]);
 
   useEffect(() => {
@@ -333,7 +445,7 @@ function Rig({
     if (!reduced) s.time += dt;
 
     const y = scrollY.current + window.innerHeight * 0.5;
-    const target = targetFor(y, tops.current, window.innerHeight * 0.6);
+    const target = targetFor(y, tops.current, window.innerHeight * 0.45);
     const damp = (from: number, to: number, rate: number) =>
       reduced ? to : THREE.MathUtils.damp(from, to, rate, dt);
 
@@ -361,8 +473,25 @@ function Rig({
 
   return (
     <group ref={group}>
-      <Swarm data={main} size={0.105} opacityScale={0.7} state={state} light={light} />
-      <Swarm data={drift} size={0.85} opacityScale={0.35} flow state={state} light={light} />
+      {main && (
+        <Swarm
+          data={main}
+          size={0.115}
+          thickness={1.3}
+          opacityScale={0.6}
+          state={state}
+          light={light}
+        />
+      )}
+      <Swarm
+        data={drift}
+        size={0.9}
+        thickness={1.6}
+        opacityScale={0.3}
+        flow
+        state={state}
+        light={light}
+      />
     </group>
   );
 }
