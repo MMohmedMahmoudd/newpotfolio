@@ -118,7 +118,7 @@ export default function KnowledgeSection() {
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-px bg-gradient-to-r from-transparent via-foreground/15 to-transparent" />
 
-      <div className="mx-auto max-w-6xl">
+      <div className="@container side-col side-right">
         <motion.div
           variants={containerVariants}
           custom={direction}
@@ -131,7 +131,7 @@ export default function KnowledgeSection() {
               <span className="h-px w-8 bg-blue-500" />
               Depth & expertise
             </div>
-            <h2 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+            <h2 className="text-4xl font-bold leading-tight tracking-tight @md:text-5xl @3xl:text-6xl">
               Senior-level thinking, not just{" "}
               <span className="gradient-text">senior-level titles</span>.
             </h2>
@@ -144,7 +144,7 @@ export default function KnowledgeSection() {
           <motion.div
             variants={containerVariants}
             custom={direction}
-            className="mb-20 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3"
+            className="mb-20 grid grid-cols-1 gap-5 @xl:grid-cols-2 @3xl:grid-cols-3"
           >
             {disciplines.map((d) => {
               const Icon = d.icon;
@@ -176,13 +176,13 @@ export default function KnowledgeSection() {
               <h3 className="text-2xl font-bold">
                 A real-world system, sketched
               </h3>
-              <span className="hidden font-mono text-xs uppercase tracking-widest text-muted-foreground sm:inline">
+              <span className="hidden font-mono text-xs uppercase tracking-widest text-muted-foreground @md:inline">
                 client → edge → service → data
               </span>
             </div>
 
-            <div className="rounded-2xl border border-foreground/10 bg-card/30 p-6 sm:p-8">
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
+            <div className="rounded-2xl border border-foreground/10 bg-card/30 p-6 @md:p-8">
+              <div className="grid grid-cols-1 gap-4 @xl:grid-cols-5">
                 {[
                   { label: "Client", sub: "RSC + SWR", color: "from-blue-500/20" },
                   { label: "Edge", sub: "CDN + middleware", color: "from-indigo-500/20" },
@@ -203,13 +203,13 @@ export default function KnowledgeSection() {
                       </div>
                     </div>
                     {i < arr.length - 1 && (
-                      <div className="absolute right-0 top-1/2 hidden h-px w-4 translate-x-full bg-gradient-to-r from-foreground/20 to-transparent md:block" />
+                      <div className="absolute right-0 top-1/2 hidden h-px w-4 translate-x-full bg-gradient-to-r from-foreground/20 to-transparent @xl:block" />
                     )}
                   </div>
                 ))}
               </div>
 
-              <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-3">
+              <div className="mt-6 grid grid-cols-1 gap-3 @xl:grid-cols-3">
                 {[
                   {
                     icon: Workflow,
@@ -252,7 +252,7 @@ export default function KnowledgeSection() {
               <BookOpen size={18} className="text-blue-400" />
               <h3 className="text-2xl font-bold">How I approach new problems</h3>
             </div>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
+            <div className="grid grid-cols-1 gap-4 @xl:grid-cols-5">
               {process.map((p, idx) => (
                 <motion.div
                   key={p.step}

@@ -80,7 +80,7 @@ export default function AboutSection() {
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-px bg-gradient-to-r from-transparent via-foreground/15 to-transparent" />
 
-      <div className="mx-auto max-w-6xl">
+      <div className="@container side-col side-right">
         <motion.div
           variants={containerVariants}
           custom={direction}
@@ -93,14 +93,14 @@ export default function AboutSection() {
               <span className="h-px w-8 bg-blue-500" />
               About
             </div>
-            <h2 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+            <h2 className="text-4xl font-bold leading-tight tracking-tight @md:text-5xl @3xl:text-6xl">
               Senior engineer who treats every product like it&apos;s{" "}
               <span className="gradient-text">their own</span>.
             </h2>
           </motion.div>
 
-          <div className="mb-20 grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-16">
-            <motion.div variants={itemVariants} className="lg:col-span-7">
+          <div className="mb-20 grid grid-cols-1 gap-10 @3xl:grid-cols-12 @3xl:gap-16">
+            <motion.div variants={itemVariants} className="@3xl:col-span-7">
               <p className="mb-5 text-lg leading-relaxed text-foreground/90">
                 I started writing code at 14 and shipped my first paid project at 17.
                 In the seven years since, I&apos;ve built, rescued, and scaled
@@ -121,7 +121,7 @@ export default function AboutSection() {
               </p>
             </motion.div>
 
-            <motion.div variants={itemVariants} className="lg:col-span-5">
+            <motion.div variants={itemVariants} className="@3xl:col-span-5">
               <div className="overflow-hidden rounded-xl border border-foreground/10 glass font-mono text-sm">
                 <div className="flex items-center gap-2 border-b border-foreground/10 bg-foreground/[0.03] px-4 py-2.5">
                   <span className="h-3 w-3 rounded-full bg-red-500/70" />
@@ -169,7 +169,7 @@ export default function AboutSection() {
           <motion.div
             variants={containerVariants}
             custom={direction}
-            className="mb-20 grid grid-cols-1 gap-5 md:grid-cols-3"
+            className="mb-20 grid grid-cols-1 gap-5 @xl:grid-cols-3"
           >
             {pillars.map((pillar) => {
               const Icon = pillar.icon;
@@ -202,7 +202,7 @@ export default function AboutSection() {
               </span>
             </div>
             <div className="relative">
-              <div className="absolute left-4 top-0 h-full w-px bg-gradient-to-b from-blue-500/40 via-purple-500/30 to-transparent md:left-1/2" />
+              <div className="absolute left-4 top-0 h-full w-px bg-gradient-to-b from-blue-500/40 via-purple-500/30 to-transparent" />
               <div className="space-y-10">
                 {timeline.map((event, idx) => {
                   const Icon = event.icon;
@@ -216,18 +216,18 @@ export default function AboutSection() {
                       whileInView="visible"
                       transition={{ duration: 0.5, delay: idx * 0.08 }}
                       viewport={revealViewport}
-                      className={`relative flex items-center gap-6 md:gap-10 ${
-                        isLeft ? "md:flex-row" : "md:flex-row-reverse"
+                      className={`relative flex items-center gap-6 @xl:gap-10 ${
+                        isLeft ? "" : ""
                       }`}
                     >
-                      <div className="absolute left-4 -translate-x-1/2 md:left-1/2">
+                      <div className="absolute left-4 -translate-x-1/2">
                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-background ring-1 ring-foreground/20">
                           <Icon size={14} className="text-blue-500" />
                         </div>
                       </div>
                       <div
-                        className={`ml-14 flex-1 md:ml-0 ${
-                          isLeft ? "md:pr-[54%] md:text-right" : "md:pl-[54%]"
+                        className={`ml-14 flex-1 ${
+                          isLeft ? "" : ""
                         }`}
                       >
                         <div className="inline-block rounded-lg border border-foreground/10 bg-card/40 p-5 text-left">

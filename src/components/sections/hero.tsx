@@ -33,13 +33,13 @@ export default function HeroSection() {
   return (
     <section
       id="home"
-      className="relative flex min-h-[100svh] items-center justify-center overflow-hidden pt-24"
+      className="relative flex min-h-[100svh] items-center overflow-hidden px-4 pt-24 sm:px-6 lg:px-8"
     >
       <div className="absolute inset-0 -z-10 mesh-gradient" />
       <div className="absolute inset-0 -z-10 grid-pattern opacity-40 [mask-image:radial-gradient(ellipse_at_center,black_20%,transparent_70%)]" />
 
       <motion.div
-        className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 text-center"
+        className="side-col side-left relative z-10 text-left"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -59,7 +59,7 @@ export default function HeroSection() {
 
         <motion.h1
           variants={itemVariants}
-          className="mb-6 text-5xl font-bold leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl xl:text-[5.5rem]"
+          className="mb-6 text-5xl font-bold leading-[1.05] tracking-tight sm:text-6xl xl:text-7xl"
         >
           <span className="block text-foreground">Engineering</span>
           <span className="block">
@@ -72,7 +72,7 @@ export default function HeroSection() {
 
         <motion.p
           variants={itemVariants}
-          className="mx-auto mb-10 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg lg:text-xl"
+          className="mb-10 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg"
         >
           I&apos;m <span className="font-semibold text-foreground">Mohamed Mahmoud</span>,
           a senior full-stack engineer. I partner with founders and product teams to
@@ -82,14 +82,14 @@ export default function HeroSection() {
 
         <motion.div
           variants={itemVariants}
-          className="mx-auto mb-14 grid max-w-xl grid-cols-3 gap-4 sm:gap-8"
+          className="mb-12 grid max-w-md grid-cols-3 gap-4 sm:gap-8"
         >
           {[
             { label: "Years shipping", value: "7+" },
             { label: "Products launched", value: "50+" },
             { label: "Avg. Lighthouse", value: "98" },
           ].map((metric) => (
-            <div key={metric.label} className="text-center">
+            <div key={metric.label} className="text-left">
               <div className="bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-3xl font-bold text-transparent sm:text-4xl">
                 {metric.value}
               </div>
@@ -102,7 +102,7 @@ export default function HeroSection() {
 
         <motion.div
           variants={itemVariants}
-          className="mb-14 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4"
+          className="mb-10 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-4"
         >
           <motion.a
             href="#projects"
@@ -145,7 +145,7 @@ export default function HeroSection() {
 
         <motion.div
           variants={itemVariants}
-          className="flex items-center justify-center gap-3 text-muted-foreground"
+          className="flex items-center gap-3 text-muted-foreground"
         >
           {[
             {

@@ -66,7 +66,7 @@ export default function ContactSection() {
       <div className="pointer-events-none absolute inset-0 -z-10 mesh-gradient opacity-50" />
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-px bg-gradient-to-r from-transparent via-foreground/15 to-transparent" />
 
-      <div className="mx-auto max-w-6xl">
+      <div className="@container side-col side-left">
         <motion.div
           variants={containerVariants}
           custom={direction}
@@ -79,7 +79,7 @@ export default function ContactSection() {
               <span className="h-px w-8 bg-blue-500" />
               Let&apos;s build something
             </div>
-            <h2 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+            <h2 className="text-4xl font-bold leading-tight tracking-tight @md:text-5xl @3xl:text-6xl">
               Ready when you are.{" "}
               <span className="gradient-text">Let&apos;s talk.</span>
             </h2>
@@ -90,10 +90,10 @@ export default function ContactSection() {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
+          <div className="grid grid-cols-1 gap-8 @3xl:grid-cols-5">
             <motion.div
               variants={itemVariants}
-              className="lg:col-span-2 space-y-4"
+              className="@3xl:col-span-2 space-y-4"
             >
               <div className="rounded-2xl border border-foreground/10 glass p-6">
                 <div className="mb-4 flex items-center gap-2 text-sm font-semibold">
@@ -195,9 +195,9 @@ export default function ContactSection() {
             <motion.form
               variants={itemVariants}
               onSubmit={onSubmit}
-              className="lg:col-span-3 rounded-2xl border border-foreground/10 bg-card/30 p-6 sm:p-8"
+              className="@3xl:col-span-3 rounded-2xl border border-foreground/10 bg-card/30 p-6 @md:p-8"
             >
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-5 @md:grid-cols-2">
                 <Field label="Name" name="name" required placeholder="Ada Lovelace" />
                 <Field
                   label="Email"
@@ -207,7 +207,7 @@ export default function ContactSection() {
                   placeholder="ada@company.com"
                 />
               </div>
-              <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <div className="mt-5 grid grid-cols-1 gap-5 @md:grid-cols-2">
                 <Field label="Company" name="company" placeholder="Company Inc." />
                 <Field
                   label="Website / product"
@@ -261,7 +261,7 @@ export default function ContactSection() {
               <input type="hidden" name="projectType" value={projectType ?? ""} />
               <input type="hidden" name="budget" value={budget ?? ""} />
 
-              <div className="mt-6 flex flex-col-reverse items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="mt-6 flex flex-col-reverse items-stretch gap-3 @md:flex-row @md:items-center @md:justify-between">
                 <p className="text-[11px] text-muted-foreground">
                   By submitting, you agree I may reply via email. No newsletters,
                   ever.

@@ -182,7 +182,7 @@ export default function ProjectsSection() {
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-px bg-gradient-to-r from-transparent via-foreground/15 to-transparent" />
 
-      <div className="mx-auto max-w-6xl">
+      <div className="@container side-col side-right">
         <motion.div
           variants={containerVariants}
           custom={direction}
@@ -192,19 +192,19 @@ export default function ProjectsSection() {
         >
           <motion.div
             variants={itemVariants}
-            className="mb-12 flex flex-col gap-6 md:flex-row md:items-end md:justify-between"
+            className="mb-12 flex flex-col gap-6 @xl:flex-row @xl:items-end @xl:justify-between"
           >
             <div className="max-w-2xl">
               <div className="mb-3 inline-flex items-center gap-2 text-xs font-mono uppercase tracking-[0.3em] text-blue-500">
                 <span className="h-px w-8 bg-blue-500" />
                 Selected work
               </div>
-              <h2 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+              <h2 className="text-4xl font-bold leading-tight tracking-tight @md:text-5xl @3xl:text-6xl">
                 Projects built with{" "}
                 <span className="gradient-text">real users</span> in mind.
               </h2>
             </div>
-            <p className="text-sm text-muted-foreground md:max-w-xs md:text-right">
+            <p className="text-sm text-muted-foreground @xl:max-w-xs @xl:text-right">
               A curated slice of production work. Full case studies with
               architecture diagrams and trade-off notes on each detail page.
             </p>
@@ -238,7 +238,7 @@ export default function ProjectsSection() {
 
           <motion.div
             layout
-            className="grid grid-cols-1 gap-6 md:grid-cols-2"
+            className="grid grid-cols-1 gap-6 @xl:grid-cols-2"
           >
             <AnimatePresence mode="popLayout">
               {filtered.map((project, idx) => (

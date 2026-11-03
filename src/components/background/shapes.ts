@@ -4,6 +4,7 @@ export type SwarmData = {
   count: number;
   stages: Stages;
   palette: Float32Array;
+  palette2: Float32Array;
   seeds: Float32Array;
   scales: Float32Array;
 };
@@ -259,41 +260,23 @@ function fillWord(count: number, rng: Rng, out: Float32Array, width: number) {
   }
 }
 
-/** Stage 3: letterform sampled from a 2D canvas. */
-function fillLetter(count: number, rng: Rng, out: Float32Array, letter: string) {
-  const size = 512;
-  const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  const points: number[] = [];
-
-  if (ctx) {
-    ctx.fillStyle = "#fff";
-    ctx.font = `800 ${size * 0.86}px Arial, Helvetica, sans-serif`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(letter, size / 2, size / 2 + size * 0.04);
-    const { data } = ctx.getImageData(0, 0, size, size);
-    for (let y = 0; y < size; y += 2) {
-      for (let x = 0; x < size; x += 2) {
-        if (data[(y * size + x) * 4 + 3] > 128) points.push(x, y);
-      }
-    }
-  }
-
-  const total = points.length / 2;
+/**
+ * Stage 3: four-petal pinwheel emblem. Each petal is a twisted quarter disc pushed
+ * slightly outward from the centre; `quad` records the petal so it gets its own colour.
+ */
+function fillEmblem(count: number, rng: Rng, out: Float32Array, quad: Uint8Array) {
+  const R = 3.3;
+  const gap = 0.28;
+  const deg = Math.PI / 180;
   for (let i = 0; i < count; i++) {
-    if (total === 0) {
-      out[i * 3] = (rng() - 0.5) * 6;
-      out[i * 3 + 1] = (rng() - 0.5) * 6;
-      out[i * 3 + 2] = 0;
-      continue;
-    }
-    const k = Math.floor(rng() * total) * 2;
-    out[i * 3] = (points[k] / size - 0.5) * 6.4;
-    out[i * 3 + 1] = -(points[k + 1] / size - 0.5) * 6.4 + 1.6;
-    out[i * 3 + 2] = gauss(rng) * 0.5;
+    const q = Math.floor(rng() * 4);
+    const r = R * Math.sqrt(rng());
+    const a = (q * 90 + 4 + rng() * 82) * deg + 0.3 * (r / R);
+    const bis = (q * 90 + 45) * deg;
+    out[i * 3] = Math.cos(a) * r + Math.cos(bis) * gap;
+    out[i * 3 + 1] = Math.sin(a) * r + Math.sin(bis) * gap;
+    out[i * 3 + 2] = gauss(rng) * 0.22;
+    quad[i] = q;
   }
 }
 
@@ -307,11 +290,7 @@ function pickPalette(rng: Rng, rim: number) {
   return 3;
 }
 
-export function createMainSwarm(
-  count: number,
-  letter: string,
-  mobile: boolean
-): SwarmData {
+export function createMainSwarm(count: number, mobile: boolean): SwarmData {
   const rng = mulberry32(1337);
   const stages: Stages = [
     new Float32Array(count * 3),
@@ -322,18 +301,22 @@ export function createMainSwarm(
   const rim = new Float32Array(count);
   fillBrain(count, rng, stages[0], rim);
   fillGlobe(count, rng, stages[1]);
-  fillWord(count, rng, stages[2], mobile ? 9.5 : 13);
-  fillLetter(count, rng, stages[3], letter);
+  fillWord(count, rng, stages[2], mobile ? 6 : 7.4);
+  const quad = new Uint8Array(count);
+  fillEmblem(count, rng, stages[3], quad);
 
   const palette = new Float32Array(count);
+  const palette2 = new Float32Array(count);
+  const petalColors = [0, 1, 3, 2]; // yellow, purple, teal, white
   const seeds = new Float32Array(count);
   const scales = new Float32Array(count);
   for (let i = 0; i < count; i++) {
     palette[i] = pickPalette(rng, rim[i]);
+    palette2[i] = petalColors[quad[i]];
     seeds[i] = rng();
     scales[i] = 0.7 + rng() * 0.7;
   }
-  return { count, stages, palette, seeds, scales };
+  return { count, stages, palette, palette2, seeds, scales };
 }
 
 /** A handful of large pyramids drifting in front of everything. */
@@ -350,5 +333,5 @@ export function createDriftSwarm(count: number): SwarmData {
     seeds[i] = rng();
     scales[i] = 0.6 + rng() * 0.9;
   }
-  return { count, stages, palette, seeds, scales };
+  return { count, stages, palette, palette2: palette, seeds, scales };
 }

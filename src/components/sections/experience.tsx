@@ -25,7 +25,7 @@ export default function ExperienceSection() {
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-px bg-gradient-to-r from-transparent via-foreground/15 to-transparent" />
 
-      <div className="mx-auto max-w-5xl">
+      <div className="@container side-col side-left">
         <motion.div
           variants={containerVariants}
           custom={direction}
@@ -38,7 +38,7 @@ export default function ExperienceSection() {
               <span className="h-px w-8 bg-blue-500" />
               Experience
             </div>
-            <h2 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+            <h2 className="text-4xl font-bold leading-tight tracking-tight @md:text-5xl @3xl:text-6xl">
               Seven years of{" "}
               <span className="gradient-text">shipping software</span> that
               people actually use.
@@ -46,7 +46,7 @@ export default function ExperienceSection() {
           </motion.div>
 
           <div className="relative">
-            <div className="absolute left-[15px] top-2 h-full w-px bg-gradient-to-b from-blue-500/40 via-purple-500/20 to-transparent sm:left-[23px]" />
+            <div className="absolute left-[15px] top-2 h-full w-px bg-gradient-to-b from-blue-500/40 via-purple-500/20 to-transparent @md:left-[23px]" />
 
             <div className="space-y-10">
               {experiences.map((exp, idx) => {
@@ -58,19 +58,19 @@ export default function ExperienceSection() {
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: idx * 0.08 }}
                     viewport={revealViewport}
-                    className="relative pl-12 sm:pl-16"
+                    className="relative pl-12 @md:pl-16"
                   >
                     <motion.div
-                      className="absolute left-0 top-2 flex h-8 w-8 items-center justify-center rounded-full border border-foreground/15 bg-background ring-4 ring-background sm:h-12 sm:w-12"
+                      className="absolute left-0 top-2 flex h-8 w-8 items-center justify-center rounded-full border border-foreground/15 bg-background ring-4 ring-background @md:h-12 @md:w-12"
                       whileHover={{ scale: 1.1, rotate: 5 }}
                     >
                       <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/10" />
-                      <Icon size={14} className="relative text-blue-400 sm:hidden" />
-                      <Icon size={18} className="relative hidden text-blue-400 sm:block" />
+                      <Icon size={14} className="relative text-blue-400 @md:hidden" />
+                      <Icon size={18} className="relative hidden text-blue-400 @md:block" />
                     </motion.div>
 
                     <div className="group rounded-xl border border-foreground/10 bg-card/30 p-6 transition-colors hover:border-foreground/20">
-                      <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+                      <div className="mb-4 flex flex-col gap-1 @md:flex-row @md:items-baseline @md:justify-between">
                         <div>
                           <h3 className="text-xl font-bold">{exp.title}</h3>
                           <div className="mt-0.5 text-sm">
@@ -143,7 +143,7 @@ export default function ExperienceSection() {
 
           <motion.div
             variants={itemVariants}
-            className="mt-16 grid grid-cols-2 gap-4 rounded-2xl border border-foreground/10 bg-card/30 p-6 sm:grid-cols-4"
+            className="mt-16 grid grid-cols-2 gap-4 rounded-2xl border border-foreground/10 bg-card/30 p-6 @md:grid-cols-4"
           >
             {[
               { label: "Years", value: "7+" },

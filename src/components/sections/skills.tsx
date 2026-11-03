@@ -86,7 +86,7 @@ export default function SkillsSection() {
       id="skills"
       className="relative overflow-hidden py-24 sm:py-32 px-4 sm:px-6 lg:px-8"
     >
-      <div className="mx-auto max-w-6xl">
+      <div className="@container side-col side-left">
         <motion.div
           variants={containerVariants}
           custom={direction}
@@ -99,7 +99,7 @@ export default function SkillsSection() {
               <span className="h-px w-8 bg-blue-500" />
               Skill architecture
             </div>
-            <h2 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+            <h2 className="text-4xl font-bold leading-tight tracking-tight @md:text-5xl @3xl:text-6xl">
               A stack I&apos;ve{" "}
               <span className="gradient-text">shipped in production</span>, not
               just read about.
@@ -110,10 +110,10 @@ export default function SkillsSection() {
             </p>
           </motion.div>
 
-          <div className="mb-16 grid grid-cols-1 gap-8 lg:grid-cols-12">
+          <div className="mb-16 grid grid-cols-1 gap-8 @3xl:grid-cols-12">
             <motion.aside
               variants={itemVariants}
-              className="lg:col-span-4 space-y-2"
+              className="@3xl:col-span-4 space-y-2"
             >
               {skillCategories.map((category, idx) => {
                 const Icon = categoryIcons[category.name] ?? Zap;
@@ -167,7 +167,7 @@ export default function SkillsSection() {
 
             <motion.div
               variants={itemVariants}
-              className="lg:col-span-8 rounded-2xl border border-foreground/10 bg-card/30 p-6 sm:p-8"
+              className="@3xl:col-span-8 rounded-2xl border border-foreground/10 bg-card/30 p-6 @md:p-8"
             >
               <AnimatePresence mode="wait">
                 <motion.div
@@ -189,7 +189,7 @@ export default function SkillsSection() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-4 @md:grid-cols-2">
                     {active.skills.map((skill, idx) => (
                       <div key={skill.name}>
                         <div className="mb-1.5 flex items-baseline justify-between">
@@ -220,9 +220,9 @@ export default function SkillsSection() {
 
           <motion.div
             variants={itemVariants}
-            className="mb-16 rounded-2xl border border-foreground/10 bg-gradient-to-br from-card/40 to-card/10 p-6 sm:p-8"
+            className="mb-16 rounded-2xl border border-foreground/10 bg-gradient-to-br from-card/40 to-card/10 p-6 @md:p-8"
           >
-            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-baseline sm:justify-between">
+            <div className="mb-6 flex flex-col gap-3 @md:flex-row @md:items-baseline @md:justify-between">
               <div>
                 <h3 className="text-xl font-bold">Breadth radar</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
@@ -273,7 +273,7 @@ export default function SkillsSection() {
           <motion.div variants={itemVariants}>
             <div className="mb-8 flex items-baseline justify-between">
               <h3 className="text-xl font-bold">System architecture fluency</h3>
-              <span className="hidden font-mono text-xs uppercase tracking-widest text-muted-foreground sm:inline">
+              <span className="hidden font-mono text-xs uppercase tracking-widest text-muted-foreground @md:inline">
                 Browser → data store
               </span>
             </div>
@@ -293,8 +293,8 @@ export default function SkillsSection() {
                     viewport={revealViewport}
                     className={`group relative overflow-hidden rounded-xl border border-foreground/10 bg-gradient-to-r ${layer.color} p-5`}
                   >
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                      <div className="flex items-center gap-3 sm:w-48 sm:flex-shrink-0">
+                    <div className="flex flex-col gap-4 @md:flex-row @md:items-center">
+                      <div className="flex items-center gap-3 @md:w-48 @md:flex-shrink-0">
                         <div
                           className={`flex h-9 w-9 items-center justify-center rounded-lg bg-background/50 ring-1 ring-foreground/10 ${layer.accent}`}
                         >

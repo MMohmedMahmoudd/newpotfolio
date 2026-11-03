@@ -43,7 +43,7 @@ export default function TestimonialsSection() {
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-px bg-gradient-to-r from-transparent via-foreground/15 to-transparent" />
 
-      <div className="mx-auto max-w-6xl">
+      <div className="@container side-col side-left">
         <motion.div
           variants={containerVariants}
           custom={direction}
@@ -56,7 +56,7 @@ export default function TestimonialsSection() {
               <span className="h-px w-8 bg-blue-500" />
               What clients say
             </div>
-            <h2 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+            <h2 className="text-4xl font-bold leading-tight tracking-tight @md:text-5xl @3xl:text-6xl">
               The short version:{" "}
               <span className="gradient-text">they rehire me</span>.
             </h2>
@@ -65,13 +65,13 @@ export default function TestimonialsSection() {
           <motion.div
             variants={containerVariants}
             custom={direction}
-            className="mb-16 grid grid-cols-1 gap-5 md:grid-cols-2"
+            className="mb-16 grid grid-cols-1 gap-5 @xl:grid-cols-2"
           >
             {testimonials.map((t) => (
               <motion.figure
                 key={t.id}
                 variants={itemVariants}
-                className="group relative overflow-hidden rounded-2xl border border-foreground/10 bg-card/30 p-6 card-hover sm:p-7"
+                className="group relative overflow-hidden rounded-2xl border border-foreground/10 bg-card/30 p-6 card-hover @md:p-7"
               >
                 <Quote
                   className="absolute right-5 top-5 text-foreground/10 transition-colors group-hover:text-blue-500/30"
@@ -87,7 +87,7 @@ export default function TestimonialsSection() {
                       />
                     ))}
                   </div>
-                  <blockquote className="mb-6 text-base leading-relaxed text-foreground/90 sm:text-lg">
+                  <blockquote className="mb-6 text-base leading-relaxed text-foreground/90 @md:text-lg">
                     &ldquo;{t.quote}&rdquo;
                   </blockquote>
                   <figcaption className="flex items-center gap-3">
@@ -106,9 +106,9 @@ export default function TestimonialsSection() {
 
           <motion.div
             variants={itemVariants}
-            className="rounded-2xl border border-foreground/10 bg-card/30 p-6 sm:p-8"
+            className="rounded-2xl border border-foreground/10 bg-card/30 p-6 @md:p-8"
           >
-            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-baseline sm:justify-between">
+            <div className="mb-6 flex flex-col gap-3 @md:flex-row @md:items-baseline @md:justify-between">
               <div>
                 <h3 className="text-lg font-semibold">Trusted by teams at</h3>
                 <p className="text-sm text-muted-foreground">

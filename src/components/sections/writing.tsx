@@ -30,7 +30,7 @@ export default function WritingSection() {
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-px bg-gradient-to-r from-transparent via-foreground/15 to-transparent" />
 
-      <div className="mx-auto max-w-6xl">
+      <div className="@container side-col side-right">
         <motion.div
           variants={containerVariants}
           custom={direction}
@@ -40,14 +40,14 @@ export default function WritingSection() {
         >
           <motion.div
             variants={itemVariants}
-            className="mb-12 flex flex-col gap-6 md:flex-row md:items-end md:justify-between"
+            className="mb-12 flex flex-col gap-6 @xl:flex-row @xl:items-end @xl:justify-between"
           >
             <div className="max-w-2xl">
               <div className="mb-3 inline-flex items-center gap-2 text-xs font-mono uppercase tracking-[0.3em] text-blue-500">
                 <span className="h-px w-8 bg-blue-500" />
                 Writing & insights
               </div>
-              <h2 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+              <h2 className="text-4xl font-bold leading-tight tracking-tight @md:text-5xl @3xl:text-6xl">
                 Essays on <span className="gradient-text">building well</span>.
               </h2>
             </div>
@@ -67,9 +67,9 @@ export default function WritingSection() {
             >
               <Link
                 href={`/blog/${featured.id}`}
-                className="grid grid-cols-1 overflow-hidden rounded-2xl border border-foreground/10 bg-card/30 transition-colors hover:border-foreground/20 md:grid-cols-2"
+                className="grid grid-cols-1 overflow-hidden rounded-2xl border border-foreground/10 bg-card/30 transition-colors hover:border-foreground/20 @xl:grid-cols-2"
               >
-                <div className="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-blue-500/15 via-purple-500/10 to-pink-500/10 md:aspect-auto">
+                <div className="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-blue-500/15 via-purple-500/10 to-pink-500/10 @xl:aspect-auto">
                   <div className="absolute inset-0 grid-pattern opacity-30" />
                   <div className="absolute inset-0 flex items-center justify-center">
                     <Pencil
@@ -81,7 +81,7 @@ export default function WritingSection() {
                     Featured
                   </div>
                 </div>
-                <div className="flex flex-col justify-between p-6 sm:p-8">
+                <div className="flex flex-col justify-between p-6 @md:p-8">
                   <div>
                     <div className="mb-4 flex flex-wrap gap-1.5">
                       {featured.tags.slice(0, 3).map((tag) => (
@@ -93,10 +93,10 @@ export default function WritingSection() {
                         </span>
                       ))}
                     </div>
-                    <h3 className="mb-3 text-2xl font-bold leading-tight tracking-tight transition-colors group-hover:text-blue-400 sm:text-3xl">
+                    <h3 className="mb-3 text-2xl font-bold leading-tight tracking-tight transition-colors group-hover:text-blue-400 @md:text-3xl">
                       {featured.title}
                     </h3>
-                    <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
+                    <p className="text-sm leading-relaxed text-muted-foreground @md:text-base">
                       {featured.excerpt}
                     </p>
                   </div>
@@ -121,7 +121,7 @@ export default function WritingSection() {
             </motion.article>
           )}
 
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 @xl:grid-cols-3">
             {rest.map((post, idx) => (
               <motion.article
                 key={post.id}

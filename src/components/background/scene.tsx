@@ -9,29 +9,55 @@ import { createDriftSwarm, createMainSwarm, type SwarmData } from "./shapes";
 
 type SceneState = {
   stage: number;
-  globeX: number;
+  x: number; // horizontal position as a fraction of the viewport width
   opacity: number;
   shiftX: number;
+  scrollWorld: number;
   time: number;
 };
 
 const DARK_COLORS = ["#ffc21a", "#8a5cff", "#f4f4ff", "#2dd4bf"];
 const LIGHT_COLORS = ["#d99a00", "#6d3df0", "#334155", "#0f9b8e"];
 
-// scroll fraction -> morph stage (0 brain, 1 globe, 2 </> VERTEX, 3 letter)
-const KEY_FRACTIONS = [0, 0.02, 0.07, 0.34, 0.46, 0.62, 0.85, 1];
-const KEY_STAGES = [0, 0, 1, 1, 2, 2, 3, 3];
+// One keyframe per page section. `stage` picks the shape (0 brain, 1 globe,
+// 2 </> VERTEX, 3 emblem), `x` which side it sits on (the section's text is on
+// the opposite side) and `opacity` how bright it is behind that content.
+type Keyframe = { id: string; stage: number; x: number; opacity: number };
+const KEYFRAMES: Keyframe[] = [
+  { id: "home", stage: 0, x: 0.23, opacity: 1 },
+  { id: "about", stage: 1, x: -0.23, opacity: 0.9 },
+  { id: "skills", stage: 1, x: 0.23, opacity: 0.6 },
+  { id: "projects", stage: 1, x: -0.23, opacity: 0.55 },
+  { id: "experience", stage: 2, x: 0.23, opacity: 0.75 },
+  { id: "knowledge", stage: 2, x: -0.23, opacity: 0.6 },
+  { id: "testimonials", stage: 2, x: 0.23, opacity: 0.55 },
+  { id: "writing", stage: 3, x: -0.23, opacity: 0.65 },
+  { id: "contact", stage: 3, x: 0.23, opacity: 0.75 },
+];
 
-function stageForScroll(f: number) {
-  for (let i = 1; i < KEY_FRACTIONS.length; i++) {
-    if (f <= KEY_FRACTIONS[i]) {
-      const a = KEY_FRACTIONS[i - 1];
-      const b = KEY_FRACTIONS[i];
-      const t = b === a ? 1 : (f - a) / (b - a);
-      return KEY_STAGES[i - 1] + (KEY_STAGES[i] - KEY_STAGES[i - 1]) * t;
-    }
+type Target = { stage: number; x: number; opacity: number };
+
+const smooth = (t: number, a: number, b: number) => {
+  const k = Math.min(1, Math.max(0, (t - a) / (b - a)));
+  return k * k * (3 - 2 * k);
+};
+
+/**
+ * Each keyframe holds for its whole section; the shape only travels across the
+ * boundary between two sections. `tops` are the section tops in document
+ * coordinates (NaN when a section is missing) and `reach` is half the
+ * transition length in pixels.
+ */
+function targetFor(y: number, tops: number[], reach: number): Target {
+  const out: Target = { ...KEYFRAMES[0] };
+  for (let i = 1; i < KEYFRAMES.length; i++) {
+    if (!Number.isFinite(tops[i])) continue; // not measured yet, or section missing
+    const t = smooth(y, tops[i] - reach, tops[i] + reach);
+    out.stage += (KEYFRAMES[i].stage - KEYFRAMES[i - 1].stage) * t;
+    out.x += (KEYFRAMES[i].x - KEYFRAMES[i - 1].x) * t;
+    out.opacity += (KEYFRAMES[i].opacity - KEYFRAMES[i - 1].opacity) * t;
   }
-  return KEY_STAGES[KEY_STAGES.length - 1];
+  return out;
 }
 
 const VERTEX = /* glsl */ `
@@ -39,7 +65,8 @@ const VERTEX = /* glsl */ `
   uniform float uStage;
   uniform float uSize;
   uniform float uOpacity;
-  uniform float uGlobeX;
+  uniform float uFlow;
+  uniform float uScroll;
   uniform vec3 uShift;
   uniform vec3 uColors[4];
 
@@ -49,6 +76,7 @@ const VERTEX = /* glsl */ `
   attribute vec3 aP3;
   attribute float aSeed;
   attribute float aPalette;
+  attribute float aPalette2;
   attribute float aScale;
 
   varying vec3 vColor;
@@ -89,7 +117,7 @@ const VERTEX = /* glsl */ `
     float tt = ease(clamp(t * 1.5 - aSeed * 0.5, 0.0, 1.0));
 
     // globe: spin about a tilted axis, parked off to one side
-    vec3 globe = rotZ(rotY(aP1, uTime * 0.18), 0.4) + vec3(uGlobeX, 0.0, 0.0);
+    vec3 globe = rotZ(rotY(aP1, uTime * 0.18), 0.4);
 
     vec3 a = aP0;
     vec3 b = globe;
@@ -106,7 +134,13 @@ const VERTEX = /* glsl */ `
       cos(uTime * 0.4 + aSeed * 23.0),
       sin(uTime * 0.35 + aSeed * 11.0)
     ) * (0.06 * (1.0 - 0.6 * textW) + energy * 2.2);
-    p += drift + uShift;
+    p += drift;
+    if (uFlow > 0.5) {
+      // foreground pyramids drift past the camera as the page scrolls
+      float h = 18.0;
+      p.y = mod(p.y + uScroll * (0.5 + aSeed) + h * 0.5, h) - h * 0.5;
+    }
+    p += uShift;
 
     float angle = uTime * (0.4 + aSeed) + aSeed * 6.2831853;
     vec3 axis = vec3(sin(aSeed * 91.0), cos(aSeed * 57.0), sin(aSeed * 33.0) + 1.5);
@@ -115,7 +149,7 @@ const VERTEX = /* glsl */ `
     vec4 mv = modelViewMatrix * vec4(p + local, 1.0);
     gl_Position = projectionMatrix * mv;
 
-    vColor = uColors[int(aPalette + 0.5)];
+    vColor = mix(uColors[int(aPalette + 0.5)], uColors[int(aPalette2 + 0.5)], smoothstep(2.2, 3.0, s));
     float depth = clamp(1.0 - (-mv.z - 8.0) / 22.0, 0.2, 1.0);
     float twinkle = 0.65 + 0.35 * sin(uTime * 1.3 + aSeed * 60.0);
     vAlpha = uOpacity * depth * twinkle;
@@ -155,12 +189,14 @@ function Swarm({
   data,
   size,
   opacityScale,
+  flow = false,
   state,
   light,
 }: {
   data: SwarmData;
   size: number;
   opacityScale: number;
+  flow?: boolean;
   state: RefObject<SceneState>;
   light: boolean;
 }) {
@@ -175,6 +211,7 @@ function Swarm({
     g.setAttribute("aP3", new THREE.InstancedBufferAttribute(data.stages[3], 3));
     g.setAttribute("aSeed", new THREE.InstancedBufferAttribute(data.seeds, 1));
     g.setAttribute("aPalette", new THREE.InstancedBufferAttribute(data.palette, 1));
+    g.setAttribute("aPalette2", new THREE.InstancedBufferAttribute(data.palette2, 1));
     g.setAttribute("aScale", new THREE.InstancedBufferAttribute(data.scales, 1));
     g.instanceCount = data.count;
     return g;
@@ -188,11 +225,12 @@ function Swarm({
       uStage: { value: 0 },
       uSize: { value: size },
       uOpacity: { value: 1 },
-      uGlobeX: { value: 0 },
+      uFlow: { value: flow ? 1 : 0 },
+      uScroll: { value: 0 },
       uShift: { value: new THREE.Vector3() },
       uColors: { value: DARK_COLORS.map((c) => new THREE.Color(c)) },
     }),
-    [size]
+    [size, flow]
   );
 
   useEffect(() => {
@@ -211,7 +249,7 @@ function Swarm({
     u.uTime.value = s.time;
     u.uStage.value = s.stage;
     u.uOpacity.value = s.opacity * opacityScale;
-    u.uGlobeX.value = s.globeX;
+    u.uScroll.value = s.scrollWorld;
     (u.uShift.value as THREE.Vector3).set(s.shiftX, 0, 0);
     /* eslint-enable react-hooks/immutability */
   });
@@ -242,26 +280,31 @@ function Rig({
 }) {
   const group = useRef<THREE.Group>(null);
   const { viewport, invalidate } = useThree();
-  const scroll = useRef(0);
+  const scrollY = useRef(0);
+  const tops = useRef<number[]>([]);
   const pointer = useRef({ x: 0, y: 0 });
   const state = useRef<SceneState>({
     stage: 0,
-    globeX: 0,
+    x: 0.23,
     opacity: 1,
     shiftX: 0,
+    scrollWorld: 0,
     time: 0,
   });
 
-  const main = useMemo(
-    () => createMainSwarm(mobile ? 2200 : 5200, "M", mobile),
-    [mobile]
-  );
+  const main = useMemo(() => createMainSwarm(mobile ? 2200 : 5200, mobile), [mobile]);
   const drift = useMemo(() => createDriftSwarm(mobile ? 14 : 34), [mobile]);
 
   useEffect(() => {
-    const update = () => {
-      const max = document.documentElement.scrollHeight - window.innerHeight;
-      scroll.current = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+    const measure = () => {
+      tops.current = KEYFRAMES.map(({ id }) => {
+        const el = document.getElementById(id);
+        return el ? el.getBoundingClientRect().top + window.scrollY : NaN;
+      });
+      if (reduced) invalidate();
+    };
+    const onScroll = () => {
+      scrollY.current = window.scrollY;
       if (reduced) invalidate();
     };
     const onPointer = (e: PointerEvent) => {
@@ -269,15 +312,16 @@ function Rig({
       pointer.current.y = (e.clientY / window.innerHeight) * 2 - 1;
       if (reduced) invalidate();
     };
-    update();
-    window.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
+    measure();
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", measure);
     window.addEventListener("pointermove", onPointer, { passive: true });
-    const ro = new ResizeObserver(update);
+    const ro = new ResizeObserver(measure);
     ro.observe(document.body);
     return () => {
-      window.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", measure);
       window.removeEventListener("pointermove", onPointer);
       ro.disconnect();
     };
@@ -288,16 +332,17 @@ function Rig({
     const dt = Math.min(delta, 0.05);
     if (!reduced) s.time += dt;
 
-    const target = stageForScroll(scroll.current);
-    s.stage = reduced ? target : THREE.MathUtils.damp(s.stage, target, 3.5, dt);
+    const y = scrollY.current + window.innerHeight * 0.5;
+    const target = targetFor(y, tops.current, window.innerHeight * 0.6);
+    const damp = (from: number, to: number, rate: number) =>
+      reduced ? to : THREE.MathUtils.damp(from, to, rate, dt);
 
-    const heroWeight = 1 - THREE.MathUtils.smoothstep(Math.min(s.stage, 1), 0, 1);
-    const base = light ? 0.55 : 0.8;
-    const rest = light ? 0.3 : 0.42;
-    s.opacity = (rest + (base - rest) * heroWeight) * (mobile ? 0.6 : 1);
-    s.shiftX = mobile ? 0 : viewport.width * 0.24 * heroWeight;
-    s.globeX = mobile ? 0 : -viewport.width * 0.27;
-    s.opacity += (light ? 0.1 : 0.16) * Math.max(0, 1 - Math.abs(s.stage - 1));
+    s.stage = damp(s.stage, target.stage, 4);
+    s.x = damp(s.x, mobile ? 0 : target.x, 4);
+    const dim = (mobile ? 0.5 : 1) * (light ? 0.75 : 1);
+    s.opacity = damp(s.opacity, target.opacity * dim, 4);
+    s.shiftX = s.x * viewport.width;
+    s.scrollWorld = scrollY.current * 0.004;
 
     const g = group.current;
     if (g) {
@@ -317,7 +362,7 @@ function Rig({
   return (
     <group ref={group}>
       <Swarm data={main} size={0.105} opacityScale={0.7} state={state} light={light} />
-      <Swarm data={drift} size={0.85} opacityScale={0.35} state={state} light={light} />
+      <Swarm data={drift} size={0.85} opacityScale={0.35} flow state={state} light={light} />
     </group>
   );
 }
