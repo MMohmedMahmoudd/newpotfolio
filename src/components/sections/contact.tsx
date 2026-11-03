@@ -63,7 +63,6 @@ export default function ContactSection() {
       id="contact"
       className="relative overflow-hidden py-24 sm:py-32 px-4 sm:px-6 lg:px-8"
     >
-      <div className="pointer-events-none absolute inset-0 -z-10 mesh-gradient opacity-50" />
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-px bg-gradient-to-r from-transparent via-foreground/15 to-transparent" />
 
       <div className="@container side-col side-left">

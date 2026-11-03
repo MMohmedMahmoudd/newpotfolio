@@ -35,9 +35,6 @@ export default function HeroSection() {
       id="home"
       className="relative flex min-h-[100svh] items-center overflow-hidden px-4 pt-24 sm:px-6 lg:px-8"
     >
-      <div className="absolute inset-0 -z-10 mesh-gradient" />
-      <div className="absolute inset-0 -z-10 grid-pattern opacity-40 [mask-image:radial-gradient(ellipse_at_center,black_20%,transparent_70%)]" />
-
       <motion.div
         className="side-col side-left relative z-10 text-left"
         variants={containerVariants}
